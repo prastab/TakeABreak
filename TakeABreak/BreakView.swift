@@ -1,43 +1,60 @@
 import SwiftUI
-
 struct BreakView: View {
-    @EnvironmentObject var timerViewModel: TimerViewModel
-    @Environment(\.scenePhase) private var scenePhase
-    
-    var body: some View {
-        Text("Break Time!")
-            .font(.largeTitle)
-            .onAppear {
-                maximizeWindow()
-            }
-    }
-    
-    private func maximizeWindow() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if let window = NSApplication.shared.windows.first {
-                // Get the main screen's frame
-                if let screen = NSScreen.main {
-                    let screenFrame = screen.frame
-                    window.isOpaque = false
-                    window.alphaValue = 0.95
-                    
-                    // Set window frame to match screen
-                    window.setFrame(screenFrame, display: true, animate: true)
-                    
-                    // Ensure window takes up full screen
-                    window.minSize = screenFrame.size
-                    window.maxSize = screenFrame.size
-                    
-                    // Remove ability to resize
-                    window.styleMask.remove(.resizable)
-                    window.styleMask.remove(.miniaturizable)
-                    window.styleMask.remove(.titled)
-                    
-                    window.makeKeyAndOrderFront(nil)
-                    print("Break window maximized and brought to front")
-                    
-                }
-            }
-        }
-    }
+	let dismissAction: () -> Void
+	let breakDuration: TimeInterval
+
+	var body: some View {
+		ZStack {
+			VisualEffectView()
+			Color.clear
+				.modifier(CustomBlurEffect())
+
+			VStack(spacing: 20) {
+				Text("Time for a Break!")
+					.font(.system(size: 48, weight: .bold))
+					.foregroundColor(.white)
+
+				Text("Look away from your screen")
+					.font(.title2)
+					.foregroundColor(.white)
+
+				Button("Skip Break") {
+					dismissAction()
+				}
+				.padding()
+				.background(Color.white.opacity(0.2))
+				.foregroundColor(.white)
+				.cornerRadius(10)
+			}
+		}
+		.edgesIgnoringSafeArea(.all)
+		.onAppear {
+			DispatchQueue.main.asyncAfter(deadline: .now() + breakDuration) {
+				dismissAction()
+			}
+		}
+	}
+}
+
+struct CustomBlurEffect: ViewModifier {
+	func body(content: Content) -> some View {
+		content
+			.blur(radius: 25)
+			.opacity(0.9)
+	}
+}
+
+struct VisualEffectView: NSViewRepresentable {
+	func makeNSView(context: Context) -> NSVisualEffectView {
+		let visualEffectView = NSVisualEffectView()
+		visualEffectView.material = .fullScreenUI
+		visualEffectView.blendingMode = .behindWindow
+		visualEffectView.state = .active
+		visualEffectView.wantsLayer = true
+		return visualEffectView
+	}
+
+	func updateNSView(_ visualEffectView: NSVisualEffectView, context: Context) {
+		visualEffectView.material = .fullScreenUI
+	}
 }

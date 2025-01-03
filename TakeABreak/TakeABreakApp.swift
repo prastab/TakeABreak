@@ -6,26 +6,46 @@
 //
 
 import SwiftUI
+import UserNotifications
 
-class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApplication.shared.setActivationPolicy(.regular)
-    }
-}
+//@main
+//struct TakeABreakApp: App {
+////    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+//    @StateObject private var breakManager: BreakManager
+//	@StateObject private var statusBarController: StatusBarController
+//
+//    init() {
+//        let breakManagerInstance = BreakManager()
+//        _breakManager = StateObject(wrappedValue: breakManagerInstance)
+//		self._statusBarController = StateObject(wrappedValue: StatusBarController(breakManager: breakManagerInstance))
+//
+//    }
+//    var body: some Scene {
+//        Settings {
+//            SettingsView()
+//                .environmentObject(breakManager)
+//        }
+////        .onChange(of: breakManager) { newBreakManager in
+////            appDelegate.breakManager = newBreakManager
+////        }
+//    }
+//}
 
 @main
 struct TakeABreakApp: App {
-    @StateObject var timerViewModel = TimerViewModel()
-    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
-    init() {
-        timerViewModel.loadSettings()
-    }
-    
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(timerViewModel)
-        }
-    }
+	@StateObject private var breakManager = BreakManager.shared
+	@StateObject private var statusBarController = StatusBarController()
+
+	var body: some Scene {
+		Settings {
+			SettingsView()
+				.environmentObject(breakManager)
+		}
+		.onChange(of: breakManager.breakInterval) { _ in
+			NotificationCenter.default.post(name: NSNotification.Name("UpdateStatusMenu"), object: nil)
+		}
+		.onChange(of: breakManager.breakDuration) { _ in
+			NotificationCenter.default.post(name: NSNotification.Name("UpdateStatusMenu"), object: nil)
+		}
+	}
 }
